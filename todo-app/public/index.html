@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>TODOアプリ</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input { margin: 10px 0; padding: 5px; }
+    button { padding: 5px 10px; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 5px 0; }
+    .completed { text-decoration: line-through; }
+  </style>
+</head>
+<body>
+  <h1>TODO管理アプリ</h1>
+  <input type="text" id="todoInput" placeholder="新しいTODOを入力">
+  <button onclick="addTodo()">追加</button>
+  <ul id="todoList"></ul>
+
+  <script>
+    async function loadTodos() {
+      const response = await fetch('/todos');
+      const todos = await response.json();
+      const list = document.getElementById('todoList');
+      list.innerHTML = '';
+      todos.forEach(todo => {
+        const li = document.createElement('li');
+        li.className = todo.completed ? 'completed' : '';
+        li.innerHTML = `
+          <span onclick="toggleTodo(${todo.id})">${todo.text}</span>
+          <button onclick="deleteTodo(${todo.id})">削除</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    async function addTodo() {
+      const input = document.getElementById('todoInput');
+      if (input.value) {
+        await fetch('/todos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: input.value })
+        });
+        input.value = '';
+        loadTodos();
+      }
+    }
+
+    async function toggleTodo(id) {
+      await fetch(`/todos/${id}`, { method: 'PUT' });
+      loadTodos();
+    }
+
+    async function deleteTodo(id) {
+      await fetch(`/todos/${id}`, { method: 'DELETE' });
+      loadTodos();
+    }
+
+    loadTodos();
+  </script>
+</body>
+</html>
